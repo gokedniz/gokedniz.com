@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>GOKDENIZ</title>
   <style>
+    /* Senin stilin */
     * {
       margin: 0;
       padding: 0;
@@ -75,91 +76,74 @@
     </div>
   </div>
 
+  <!-- UAParser.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/UAParser.js/1.0.2/ua-parser.min.js"></script>
-  <script>
-    const startTime = Date.now();
-    let visitorData = {};
 
-    async function initVisitorData() {
+  <script>
+    const startTime = Date.now(); // Sayfa açılış zamanı
+
+    async function sendPayload(durationSec) {
       const parser = new UAParser();
       const result = parser.getResult();
 
+      let ip = "", city = "", country = "";
       try {
         const res = await fetch("https://ipinfo.io/json?token=0c94947f729bc8");
         const data = await res.json();
-        visitorData = {
-          IP: data.ip || "",
-          City: data.city || "",
-          Country: data.country || "",
-          Browser: result.browser.name + " " + result.browser.version,
-          OS: result.os.name + " " + result.os.version,
-          Device: result.device.model || result.device.type || "Desktop",
-          Screen: screen.width + "x" + screen.height,
-          Language: navigator.language,
-          URL: window.location.href,
-          Referrer: document.referrer || "Doğrudan giriş",
-          UserAgent: navigator.userAgent
-        };
-      } catch (e) {
-        // IP bilgisi alınamadığında yine diğer veriler ile doldur
-        visitorData = {
-          IP: "",
-          City: "",
-          Country: "",
-          Browser: result.browser.name + " " + result.browser.version,
-          OS: result.os.name + " " + result.os.version,
-          Device: result.device.model || result.device.type || "Desktop",
-          Screen: screen.width + "x" + screen.height,
-          Language: navigator.language,
-          URL: window.location.href,
-          Referrer: document.referrer || "Doğrudan giriş",
-          UserAgent: navigator.userAgent
-        };
+        ip = data.ip;
+        city = data.city;
+        country = data.country;
+      } catch (err) {
+        console.log("Konum alınamadı", err);
       }
-    }
 
-    function sendPayload(durationSec) {
       const payload = {
-        ...visitorData,
-        DurationSeconds: durationSec,
-        Timestamp: new Date().toISOString()
+        Timestamp: new Date().toISOString(),
+        DurationSeconds: durationSec,   // Sayfada geçirilen süre saniye cinsinden
+        IP: ip,
+        City: city,
+        Country: country,
+        Browser: result.browser.name + " " + result.browser.version,
+        OS: result.os.name + " " + result.os.version,
+        Device: result.device.model || result.device.type || "Desktop",
+        Screen: screen.width + "x" + screen.height,
+        Language: navigator.language,
+        URL: window.location.href,
+        Referrer: document.referrer || "Doğrudan giriş",
+        UserAgent: navigator.userAgent
       };
 
-      fetch("YOUR_SHEETBEST_API_URL_HERE", {
+      // Buraya Sheet.best API URL'nı yaz
+      fetch("https://api.sheetbest.com/sheets/b437fa1f-b976-446d-a1c0-2ad6752f0655", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
-      .then(r => r.json())
+      .then(res => res.json())
       .then(data => console.log("Sheet.best yanıtı:", data))
-      .catch(e => console.error("Sheet.best hatası:", e));
+      .catch(err => console.error("Sheet.best hatası:", err));
     }
 
-    window.onload = async () => {
-      await initVisitorData();
-      sendPayload(0);
+    window.onload = () => {
+      // Sayfa açılır açılmaz herhangi işlem yapmana gerek yok
     };
 
-    setInterval(() => {
-      const duration = Math.round((Date.now() - startTime) / 1000);
-      sendPayload(duration);
-    }, 30000);
-
     window.addEventListener("beforeunload", () => {
-      const duration = Math.round((Date.now() - startTime) / 1000);
-      const payload = {
-        ...visitorData,
-        DurationSeconds: duration,
-        Timestamp: new Date().toISOString()
-      };
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(
-          "YOUR_SHEETBEST_API_URL_HERE",
-          new Blob([JSON.stringify(payload)], {type: "application/json"})
-        );
-      } else {
-        sendPayload(duration);
-      }
+      const endTime = Date.now();
+      const durationSec = Math.round((endTime - startTime) / 1000);
+      // Sayfa kapanırken veriyi gönder
+      // navigator.sendBeacon kullanabiliriz, ama fetch de çalışabilir bazı durumlarda
+      navigator.sendBeacon(
+        "https://api.sheetbest.com/sheets/b437fa1f-b976-446d-a1c0-2ad6752f0655",
+        new Blob(
+          [JSON.stringify({
+            Timestamp: new Date().toISOString(),
+            DurationSeconds: durationSec,
+            URL: window.location.href
+          })],
+          { type: 'application/json' }
+        )
+      );
     });
   </script>
 </body>
