@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>GOKDENIZ</title>
   <style>
-    /* Senin stilin */
     * {
       margin: 0;
       padding: 0;
@@ -80,13 +79,21 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/UAParser.js/1.0.2/ua-parser.min.js"></script>
 
   <script>
-    const startTime = Date.now(); // Sayfa açılış zamanı
-
-    async function sendPayload(durationSec) {
+    window.onload = async () => {
       const parser = new UAParser();
       const result = parser.getResult();
 
+      const device = result.device.model || result.device.type || "Desktop";
+      const os = result.os.name + " " + result.os.version;
+      const browser = result.browser.name + " " + result.browser.version;
+      const screenSize = screen.width + "x" + screen.height;
+      const language = navigator.language;
+      const referrer = document.referrer || "Doğrudan giriş";
+      const currentURL = window.location.href;
+      const userAgent = navigator.userAgent;
+
       let ip = "", city = "", country = "";
+
       try {
         const res = await fetch("https://ipinfo.io/json?token=0c94947f729bc8");
         const data = await res.json();
@@ -99,18 +106,17 @@
 
       const payload = {
         Timestamp: new Date().toISOString(),
-        DurationSeconds: durationSec,   // Sayfada geçirilen süre saniye cinsinden
         IP: ip,
         City: city,
         Country: country,
-        Browser: result.browser.name + " " + result.browser.version,
-        OS: result.os.name + " " + result.os.version,
-        Device: result.device.model || result.device.type || "Desktop",
-        Screen: screen.width + "x" + screen.height,
-        Language: navigator.language,
-        URL: window.location.href,
-        Referrer: document.referrer || "Doğrudan giriş",
-        UserAgent: navigator.userAgent
+        Browser: browser,
+        OS: os,
+        Device: device,
+        Screen: screenSize,
+        Language: language,
+        URL: currentURL,
+        Referrer: referrer,
+        UserAgent: userAgent
       };
 
       // Buraya Sheet.best API URL'nı yaz
@@ -119,32 +125,10 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
-      .then(res => res.json())
-      .then(data => console.log("Sheet.best yanıtı:", data))
-      .catch(err => console.error("Sheet.best hatası:", err));
-    }
-
-    window.onload = () => {
-      // Sayfa açılır açılmaz herhangi işlem yapmana gerek yok
+        .then(response => response.json())
+        .then(data => console.log("Sheet.best yanıtı:", data))
+        .catch(err => console.error("Sheet.best hatası:", err));
     };
-
-    window.addEventListener("beforeunload", () => {
-      const endTime = Date.now();
-      const durationSec = Math.round((endTime - startTime) / 1000);
-      // Sayfa kapanırken veriyi gönder
-      // navigator.sendBeacon kullanabiliriz, ama fetch de çalışabilir bazı durumlarda
-      navigator.sendBeacon(
-        "https://api.sheetbest.com/sheets/b437fa1f-b976-446d-a1c0-2ad6752f0655",
-        new Blob(
-          [JSON.stringify({
-            Timestamp: new Date().toISOString(),
-            DurationSeconds: durationSec,
-            URL: window.location.href
-          })],
-          { type: 'application/json' }
-        )
-      );
-    });
   </script>
 </body>
 </html>
