@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>GOKDENIZ</title>
   <style>
-    /* Senin stilin */
     * {
       margin: 0;
       padding: 0;
@@ -61,28 +60,18 @@
 </head>
 <body>
   <div class="image-container">
-    <img
-      src="icardi_desktop.jpg"
-      alt="Masaüstü Görsel"
-      class="desktop-image"
-    />
-    <img
-      src="icardi_phone.jpg"
-      alt="Mobil Görsel"
-      class="mobile-image"
-    />
-    <div class="overlay-text">
-      Bu site Osimhen imzayı atınca aktif olacaktır...
-    </div>
+    <img src="icardi_desktop.jpg" alt="Masaüstü Görsel" class="desktop-image" />
+    <img src="icardi_phone.jpg" alt="Mobil Görsel" class="mobile-image" />
+    <div class="overlay-text">Bu site Osimhen imzayı atınca aktif olacaktır...</div>
   </div>
 
   <!-- UAParser.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/UAParser.js/1.0.2/ua-parser.min.js"></script>
 
   <script>
-    const startTime = Date.now(); // Sayfa açılış zamanı
+    const startTime = Date.now();
 
-    async function sendPayload(durationSec) {
+    async function sendData(durationSec) {
       const parser = new UAParser();
       const result = parser.getResult();
 
@@ -99,7 +88,7 @@
 
       const payload = {
         Timestamp: new Date().toISOString(),
-        DurationSeconds: durationSec,   // Sayfada geçirilen süre saniye cinsinden
+        DurationSeconds: durationSec,
         IP: ip,
         City: city,
         Country: country,
@@ -113,7 +102,6 @@
         UserAgent: navigator.userAgent
       };
 
-      // Buraya Sheet.best API URL'nı yaz
       fetch("https://api.sheetbest.com/sheets/b437fa1f-b976-446d-a1c0-2ad6752f0655", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -124,25 +112,26 @@
       .catch(err => console.error("Sheet.best hatası:", err));
     }
 
-    window.onload = () => {
-      // Sayfa açılır açılmaz herhangi işlem yapmana gerek yok
-    };
+    // 30 saniyede bir süreyi gönder
+    setInterval(() => {
+      const durationSec = Math.round((Date.now() - startTime) / 1000);
+      sendData(durationSec);
+    }, 30000);
 
+    // Sayfa kapanırken son süreyi gönder
     window.addEventListener("beforeunload", () => {
-      const endTime = Date.now();
-      const durationSec = Math.round((endTime - startTime) / 1000);
-      // Sayfa kapanırken veriyi gönder
-      // navigator.sendBeacon kullanabiliriz, ama fetch de çalışabilir bazı durumlarda
+      const durationSec = Math.round((Date.now() - startTime) / 1000);
+
+      const payload = {
+        Timestamp: new Date().toISOString(),
+        DurationSeconds: durationSec,
+        URL: window.location.href
+      };
+
+      // Kapanışta hızlı veri gönderimi için sendBeacon kullan
       navigator.sendBeacon(
         "https://api.sheetbest.com/sheets/b437fa1f-b976-446d-a1c0-2ad6752f0655",
-        new Blob(
-          [JSON.stringify({
-            Timestamp: new Date().toISOString(),
-            DurationSeconds: durationSec,
-            URL: window.location.href
-          })],
-          { type: 'application/json' }
-        )
+        new Blob([JSON.stringify(payload)], { type: "application/json" })
       );
     });
   </script>
