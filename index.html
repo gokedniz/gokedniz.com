@@ -75,26 +75,7 @@
     </div>
   </div>
 
-  <!-- Gizli iframe: form gönderimi için -->
-  <iframe name="hiddenFrame" style="display:none;"></iframe>
-
-  <!-- Verileri göndermek için form -->
-  <form id="visitorForm" method="POST" target="hiddenFrame"
-        action="https://script.google.com/macros/library/d/1_AnKRbQducD0QW8Na3T-Zjyckz452nwexwXeBfP9jGuv-asMxdMKvuj0/1">
-    <input type="hidden" name="ip" id="ip" />
-    <input type="hidden" name="device" id="device" />
-    <input type="hidden" name="browser" id="browser" />
-    <input type="hidden" name="os" id="os" />
-    <input type="hidden" name="screen" id="screen" />
-    <input type="hidden" name="city" id="city" />
-    <input type="hidden" name="country" id="country" />
-    <input type="hidden" name="userAgent" id="userAgent" />
-    <input type="hidden" name="language" id="language" />
-    <input type="hidden" name="url" id="url" />
-    <input type="hidden" name="referrer" id="referrer" />
-  </form>
-
-  <!-- UAParser kütüphanesi -->
+  <!-- UAParser.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/UAParser.js/1.0.2/ua-parser.min.js"></script>
 
   <script>
@@ -102,31 +83,51 @@
       const parser = new UAParser();
       const result = parser.getResult();
 
-      // Form alanlarına değerleri yaz
-      document.getElementById("device").value =
-        result.device.model || result.device.type || "Desktop";
-      document.getElementById("os").value = result.os.name + " " + result.os.version;
-      document.getElementById("browser").value =
-        result.browser.name + " " + result.browser.version;
-      document.getElementById("screen").value = screen.width + "x" + screen.height;
-      document.getElementById("language").value = navigator.language;
-      document.getElementById("referrer").value = document.referrer || "Doğrudan giriş";
-      document.getElementById("url").value = window.location.href;
-      document.getElementById("userAgent").value = navigator.userAgent;
+      const device = result.device.model || result.device.type || "Desktop";
+      const os = result.os.name + " " + result.os.version;
+      const browser = result.browser.name + " " + result.browser.version;
+      const screenSize = screen.width + "x" + screen.height;
+      const language = navigator.language;
+      const referrer = document.referrer || "Doğrudan giriş";
+      const currentURL = window.location.href;
+      const userAgent = navigator.userAgent;
 
-      // IP ve konum bilgisi
+      let ip = "", city = "", country = "";
+
       try {
         const res = await fetch("https://ipinfo.io/json?token=0c94947f729bc8");
         const data = await res.json();
-        document.getElementById("ip").value = data.ip;
-        document.getElementById("city").value = data.city;
-        document.getElementById("country").value = data.country;
+        ip = data.ip;
+        city = data.city;
+        country = data.country;
       } catch (err) {
-        console.log("IP konumu alınamadı", err);
+        console.log("Konum alınamadı", err);
       }
 
-      // Formu gizli iframe'e gönder
-      document.getElementById("visitorForm").submit();
+      const payload = {
+        Timestamp: new Date().toISOString(),
+        IP: ip,
+        City: city,
+        Country: country,
+        Browser: browser,
+        OS: os,
+        Device: device,
+        Screen: screenSize,
+        Language: language,
+        URL: currentURL,
+        Referrer: referrer,
+        UserAgent: userAgent
+      };
+
+      // Buraya Sheet.best API URL'nı yaz
+      fetch("https://api.sheetbest.com/sheets/b437fa1f-b976-446d-a1c0-2ad6752f0655", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+        .then(response => response.json())
+        .then(data => console.log("Sheet.best yanıtı:", data))
+        .catch(err => console.error("Sheet.best hatası:", err));
     };
   </script>
 </body>
