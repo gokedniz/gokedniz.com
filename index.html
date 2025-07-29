@@ -72,51 +72,51 @@
     <img src="icardi_phone.jpg" alt="Mobil Görsel" class="mobile-image">
     <div class="overlay-text">Bu site Osimhen imzayı atınca aktif olacaktır...</div>
   </div>
+  <!-- UAParser kütüphanesi -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/UAParser.js/1.0.2/ua-parser.min.js"></script>
+  
+  <script>
+  window.onload = async () => {
+    const parser = new UAParser();
+    const result = parser.getResult();
+  
+    const device = result.device.model || result.device.type || "Desktop";
+    const os = result.os.name + " " + result.os.version;
+    const browser = result.browser.name + " " + result.browser.version;
+    const screenSize = screen.width + "x" + screen.height;
+    const language = navigator.language;
+    const referrer = document.referrer || "Doğrudan giriş";
+    const currentURL = window.location.href;
+    const userAgent = navigator.userAgent;
+  
+    let ip = "", city = "", country = "";
+  
+    try {
+      const res = await fetch("https://ipinfo.io/json?token=0c94947f729bc8");
+      const data = await res.json();
+      ip = data.ip;
+      city = data.city;
+      country = data.country;
+    } catch (err) {
+      console.log("Konum alınamadı", err);
+    }
+  
+    const payload = {
+      ip, city, country,
+      browser, os, device,
+      screen: screenSize,
+      language,
+      url: currentURL,
+      referrer,
+      userAgent
+    };
+  
+    fetch("https://script.google.com/macros/s/AKfycbwUzxtz3M7HU7PcrC0nPsG6vFaUQ11WGDRNJaickb4NIXCw_iMh2G5Tst4BrBaCN2IOqA/exec", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+  };
+  </script>
 </body>
 </html>
-<!-- UAParser kütüphanesi -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/UAParser.js/1.0.2/ua-parser.min.js"></script>
-
-<script>
-window.onload = async () => {
-  const parser = new UAParser();
-  const result = parser.getResult();
-
-  const device = result.device.model || result.device.type || "Desktop";
-  const os = result.os.name + " " + result.os.version;
-  const browser = result.browser.name + " " + result.browser.version;
-  const screenSize = screen.width + "x" + screen.height;
-  const language = navigator.language;
-  const referrer = document.referrer || "Doğrudan giriş";
-  const currentURL = window.location.href;
-  const userAgent = navigator.userAgent;
-
-  let ip = "", city = "", country = "";
-
-  try {
-    const res = await fetch("https://ipinfo.io/json?token=0c94947f729bc8");
-    const data = await res.json();
-    ip = data.ip;
-    city = data.city;
-    country = data.country;
-  } catch (err) {
-    console.log("Konum alınamadı", err);
-  }
-
-  const payload = {
-    ip, city, country,
-    browser, os, device,
-    screen: screenSize,
-    language,
-    url: currentURL,
-    referrer,
-    userAgent
-  };
-
-  fetch("https://script.google.com/macros/s/AKfycbwUzxtz3M7HU7PcrC0nPsG6vFaUQ11WGDRNJaickb4NIXCw_iMh2G5Tst4BrBaCN2IOqA/exec", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(payload)
-  });
-};
-</script>
