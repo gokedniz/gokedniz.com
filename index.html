@@ -115,7 +115,14 @@
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify(payload)
-    });
+    })
+      .then(response => response.text())
+      .then(result => {
+        console.log("Google yanıtı:", result); // burada OK yazmalı
+      })
+      .catch(error => {
+        console.error("Hata oluştu:", error); // fetch başarısızsa burası çalışır
+      });
   };
   </script>
 </body>
