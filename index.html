@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yakında Sizlerle</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      width: 100%;
+      font-family: Arial, sans-serif;
+    }
+
+    .image-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .image-container img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .image-container .desktop-image {
+      display: block;
+    }
+
+    .overlay-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 6vw;
+      color: white;
+      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
+      z-index: 2;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .image-container .desktop-image {
+        display: none;
+      }
+
+      .image-container .mobile-image {
+        display: block;
+      }
+
+      .overlay-text {
+        top: 35%; /* mobilde yukarıda */
+        font-size: 8vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="image-container">
+    <img src="icardi_desktop.jpg" alt="Masaüstü Görsel" class="desktop-image">
+    <img src="icardi_phone.jpg" alt="Mobil Görsel" class="mobile-image">
+    <div class="overlay-text">Bu site Osimhen imzayı atınca aktif olacaktır...</div>
+  </div>
+</body>
+</html>
