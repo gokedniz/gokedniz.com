@@ -70,39 +70,13 @@
 
   <script>
     const startTime = Date.now();
+    let visitorData = {};
 
-    async function sendData(durationSec) {
-      const parser = new UAParser();
-      const result = parser.getResult();
+    async function sendData() {
+      const duration = Math.round((Date.now() - startTime) / 1000);
+      const payload = {...visitorData, DurationSeconds: duration, Timestamp: new Date().toISOString()};
 
-      let ip = "", city = "", country = "";
-      try {
-        const res = await fetch("https://ipinfo.io/json?token=0c94947f729bc8");
-        const data = await res.json();
-        ip = data.ip;
-        city = data.city;
-        country = data.country;
-      } catch (err) {
-        console.log("Konum alınamadı", err);
-      }
-
-      const payload = {
-        Timestamp: new Date().toISOString(),
-        DurationSeconds: durationSec,
-        IP: ip,
-        City: city,
-        Country: country,
-        Browser: result.browser.name + " " + result.browser.version,
-        OS: result.os.name + " " + result.os.version,
-        Device: result.device.model || result.device.type || "Desktop",
-        Screen: screen.width + "x" + screen.height,
-        Language: navigator.language,
-        URL: window.location.href,
-        Referrer: document.referrer || "Doğrudan giriş",
-        UserAgent: navigator.userAgent
-      };
-
-      fetch("https://api.sheetbest.com/sheets/b437fa1f-b976-446d-a1c0-2ad6752f0655", {
+      fetch("YOUR_SHEETBEST_API_URL_HERE", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -112,27 +86,67 @@
       .catch(err => console.error("Sheet.best hatası:", err));
     }
 
-    // 30 saniyede bir süreyi gönder
-    setInterval(() => {
-      const durationSec = Math.round((Date.now() - startTime) / 1000);
-      sendData(durationSec);
-    }, 30000);
+    window.onload = async () => {
+      const parser = new UAParser();
+      const result = parser.getResult();
 
-    // Sayfa kapanırken son süreyi gönder
+      try {
+        const res = await fetch("https://ipinfo.io/json?token=0c94947f729bc8");
+        const data = await res.json();
+        visitorData = {
+          IP: data.ip || "",
+          City: data.city || "",
+          Country: data.country || "",
+          Browser: result.browser.name + " " + result.browser.version,
+          OS: result.os.name + " " + result.os.version,
+          Device: result.device.model || result.device.type || "Desktop",
+          Screen: screen.width + "x" + screen.height,
+          Language: navigator.language,
+          URL: window.location.href,
+          Referrer: document.referrer || "Doğrudan giriş",
+          UserAgent: navigator.userAgent
+        };
+      } catch (err) {
+        console.log("Konum alınamadı", err);
+        visitorData = {
+          IP: "",
+          City: "",
+          Country: "",
+          Browser: result.browser.name + " " + result.browser.version,
+          OS: result.os.name + " " + result.os.version,
+          Device: result.device.model || result.device.type || "Desktop",
+          Screen: screen.width + "x" + screen.height,
+          Language: navigator.language,
+          URL: window.location.href,
+          Referrer: document.referrer || "Doğrudan giriş",
+          UserAgent: navigator.userAgent
+        };
+      }
+
+      await sendData();
+    };
+
+    // 30 saniyede bir veriyi gönder
+    setInterval(sendData, 30000);
+
+    // Sayfa kapanırken son veriyi gönder (navigator.sendBeacon ile)
     window.addEventListener("beforeunload", () => {
-      const durationSec = Math.round((Date.now() - startTime) / 1000);
-
-      const payload = {
-        Timestamp: new Date().toISOString(),
-        DurationSeconds: durationSec,
-        URL: window.location.href
-      };
-
-      // Kapanışta hızlı veri gönderimi için sendBeacon kullan
-      navigator.sendBeacon(
-        "https://api.sheetbest.com/sheets/b437fa1f-b976-446d-a1c0-2ad6752f0655",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
-      );
+      const duration = Math.round((Date.now() - startTime) / 1000);
+      const payload = {...visitorData, DurationSeconds: duration, Timestamp: new Date().toISOString()};
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(
+          "YOUR_SHEETBEST_API_URL_HERE",
+          new Blob([JSON.stringify(payload)], {type: "application/json"})
+        );
+      } else {
+        // sendBeacon desteklemezse fetch keepalive kullan
+        fetch("https://api.sheetbest.com/sheets/b437fa1f-b976-446d-a1c0-2ad6752f0655", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          keepalive: true
+        });
+      }
     });
   </script>
 </body>
